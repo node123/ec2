@@ -1,44 +1,43 @@
-# Create a new instance of the latest Ubuntu 14.04 on an
-# t2.micro node with an AWS Tag naming it "HelloWorld"
 provider "aws" {
-  region = "us-west-2"
+        access_key = "AKIAJOQRUEN5RXZLGMZQ"
+        secret_key = "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"
+        region = "us-east-1"
 }
 
-data "aws_ami" "ubuntu" {
-  most_recent = true
+resource "aws_security_group" "tenable" {
+        name = "tenable-scanner"
+        description = "Web Security Group"
+        
+        ingress {
+                from_port = 22
+                to_port = 0
+                protocol = "tcp"
+                cidr_blocks = ["0.0.0.0/0"]
+        }
+        ingress {
+                from_port = 80
+                to_port = 0
+                protocol = "tcp"
+                cidr_blocks = ["0.0.0.0/0"]
+        }
 
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-trusty-14.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["099720109477"] # Canonical
+        egress {
+                from_port = 0
+                to_port = 0
+                protocol = "-1"
+                cidr_blocks = ["0.0.0.0/0"]
+        }
+}
+resource "template_file" "web-userdata" {
+    filename = "user-data.web"
 }
 
-resource "aws_instance" "web" {
-  ami           = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.micro"
-
-  tags {
-    Name = "HelloWorld"
-  }
+resource "aws_instance" "myweb" {
+        ami = "ami-0515a07ee3c09c3a9"
+        instance_type = "t2.micro"
+        key_name = "web"
+        user_data = "${template_file.web-userdata.rendered}"
+        tags {
+         Name = "myweb"
+        }
 }
-
-#AWS Config
-
-variable "aws_access_key" {
-  default = "AKIATQAVOB6BPMMSW37U"
-}
-
-variable "aws_secret_key" {
-  default = "0b6m6uc0IHi0FwuxSfWV99DGSk3voS399qijjYZM"
-}
-
-variable "aws_region" {
-  default = "us-east-1"
-
